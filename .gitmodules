@@ -1,0 +1,3 @@
+[submodule "lf-3pi-template"]
+	path = lf-3pi-template
+	url = git@github.com:lf-lang/lf-3pi-template.git

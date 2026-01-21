@@ -1,0 +1,184 @@
+name: ACT_MOTOR_LF_POLOLU 
+
+#on:
+#  workflow_run:
+#    workflows: ["ACT_LED_LF_POLOLU"]
+#    types:
+#      - completed
+
+on:
+  workflow_call:
+
+jobs:
+  setup:
+    runs-on: [self-hosted, linux, lf-act-ast]
+    #Strategy makes sense if there are multiple versions to test
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          clean: true
+          fetch-depth: 0
+          submodules: recursive
+      - name: Unshallow Modules
+        run: |
+          git submodule foreach '
+            echo "Fixing submodule $name"
+            git fetch --unshallow || git fetch --all
+            '
+      - name: Nix Setup
+        id: nix
+        working-directory: ${{ github.workspace }}/lf-3pi-template
+        run: |
+          nix develop --command true
+      - name: Debug git state
+        if: steps.nix.outcome == 'failure'
+        working-directory: ${{ github.workspace }}/lf-3pi-template
+        run: |
+          git rev-parse --is-shallow-repository
+          git rev-list --count HEAD
+
+  pythonpackages:
+    runs-on: [self-hosted, linux, lf-act-ast]
+    steps:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Display Python version
+        run: |
+          echo "Push detected"
+          echo "$GITHUB_WORKSPACE"
+          python3 -m pip install --upgrade pip
+          pip3 install opencv-python numpy pandas matplotlib
+          python3 -c "import sys; print(sys.version)"
+  
+  filecleanup:
+    runs-on: [self-hosted, linux, lf-act-ast]
+    needs: setup
+    if: always()
+    steps:
+      - uses: actions/checkout@v5
+      - name: Copy Script
+        run: cp $GITHUB_WORKSPACE/test_lf_programs/*.sh $GITHUB_WORKSPACE/lf-3pi-template/
+      - name: Run Script
+        working-directory: ${{ github.workspace }}/lf-3pi-template/
+        run: |
+          chmod +x cleanup.sh
+          ./cleanup.sh
+
+  filesetup:
+    #if: github.event.workflow_run.conclusion == 'success'
+    runs-on: [self-hosted, linux, lf-act-ast]
+    needs: filecleanup
+    steps:
+      - name: Copy Files
+        working-directory: ${{ github.workspace }}
+        run: |
+          #ls && ls src/
+          cp $GITHUB_WORKSPACE/test_lf_programs/*.py $GITHUB_WORKSPACE/lf-3pi-template
+          cp $GITHUB_WORKSPACE/test_lf_programs/*.lf $GITHUB_WORKSPACE/lf-3pi-template/src 
+ 
+  compilemotor1:
+    runs-on: [self-hosted, linux, lf-act-ast]
+    needs: [filesetup]
+    steps:
+      - name: Compile Motor_1
+        working-directory: ${{ github.workspace }}/lf-3pi-template
+        run: nix develop --command lfc src/Motor_1.lf
+  
+  flashmotor1:
+    runs-on: [self-hosted, linux, lf-act-ast]
+    needs: [compilemotor1]
+    steps:
+    - name: Flashing Motor_1
+      working-directory: ${{ github.workspace }}/lf-3pi-template
+      run: nix develop --command picotool load -x bin/Motor_1.elf -f
+  
+  runmotor1:
+    runs-on: [self-hosted, linux, lf-act-ast]
+    needs: [flashmotor1]
+    steps:
+      - name: Run Test for Motor_1
+        id: test1
+        working-directory: ${{ github.workspace }}/lf-3pi-template
+        run: python3 test_motor_module.py 1
+  
+  compilemotor2:
+    runs-on: [self-hosted, linux, lf-act-ast]
+    needs: [filesetup]
+    steps:
+      - name: Compile Motor_2
+        working-directory: ${{ github.workspace }}/lf-3pi-template
+        run: nix develop --command lfc src/Motor_2.lf
+  
+  flashmotor2:
+    runs-on: [self-hosted, linux, lf-act-ast]
+    needs: [compilemotor2, runmotor1]
+    steps:
+    - name: Flashing Motor_2
+      working-directory: ${{ github.workspace }}/lf-3pi-template
+      run: nix develop --command picotool load -x bin/Motor_2.elf -f
+  
+  runmotor2:
+    runs-on: [self-hosted, linux, lf-act-ast]
+    needs: [flashmotor2]
+    steps:
+      - name: Run Test for Motor_2
+        id: test2
+        working-directory: ${{ github.workspace }}/lf-3pi-template
+        run: python3 test_motor_module.py 2
+
+  compilemotor3:
+    runs-on: [self-hosted, linux, lf-act-ast]
+    needs: [filesetup]
+    steps:
+      - name: Compile Motor_3
+        working-directory: ${{ github.workspace }}/lf-3pi-template
+        run: nix develop --command lfc src/Motor_3.lf
+  
+  flashmotor3:
+    runs-on: [self-hosted, linux, lf-act-ast]
+    needs: [compilemotor3, runmotor2]
+    steps:
+    - name: Flashing Motor_3
+      working-directory: ${{ github.workspace }}/lf-3pi-template
+      run: nix develop --command picotool load -x bin/Motor_3.elf -f
+
+  runmotor3:
+    runs-on: [self-hosted, linux, lf-act-ast]
+    needs: [flashmotor3]
+    steps:
+      - name: Run Test
+        id: test3
+        working-directory: ${{ github.workspace }}/lf-3pi-template
+        run: python3 test_motor_module.py 3
+  
+  plotgraph:
+    runs-on: [self-hosted, linux, lf-act-ast]
+    needs: [runmotor1, runmotor2, runmotor3]
+    if: |
+      needs.runmotor1.result == 'success' ||
+      needs.runmotor2.result == 'success' ||
+      needs.runmotor3.result == 'success'
+    steps:
+      - name: Run Test
+        working-directory: ${{ github.workspace }}/lf-3pi-template
+        run: python3 plot_motor.py
+       
+  motorreportupload:
+    runs-on: [self-hosted, linux, lf-act-ast]
+    needs: [plotgraph]
+    steps:
+      - name: Upload test reports
+        working-directory: ${{ github.workspace }}
+        run: |
+          ls
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Motor-test-report
+          path: |
+            ${{ github.workspace }}/lf-3pi-template/*.svg
+            ${{ github.workspace }}/lf-3pi-template/motor.csv

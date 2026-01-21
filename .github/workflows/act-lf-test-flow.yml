@@ -1,0 +1,19 @@
+name: ACT_LF_POLOLU 
+
+on:
+  #push:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  led-test:
+    if: contains(github.event.pull_request.labels.*.name, 'act-lf-led')
+    uses: ./.github/workflows/act-lf-led.yml
+
+  motor-test:
+    needs: led-test
+    if: contains(github.event.pull_request.labels.*.name, 'act-lf-motor') || needs.call-led-test.result == 'skipped'
+    uses: ./.github/workflows/act-lf-motor.yml

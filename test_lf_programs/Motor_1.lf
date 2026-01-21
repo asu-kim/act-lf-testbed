@@ -1,0 +1,100 @@
+/**
+ * Template for robot driving lab exercises.
+ * This template just periodically switches between a
+ * STOPPED and a DRIVING mode, updating the LCD display
+ * on each change of mode.
+ */
+target C {
+  platform: {
+    name: "rp2040",
+    board: "pololu_3pi_2040_robot"
+  },
+  single-threaded: true
+  //threading: false,
+}
+
+import Display from "lib/Display.lf"
+import Motors from "lib/Motors.lf"
+import Encoders from "lib/Encoders.lf"
+
+
+reactor AngleToDistance {
+  input trigger:bool
+  state dist_right:float = 0.0
+  state dist_left:float = 0.0
+  state r1:float = 0.0
+  state r2:float = 0.0
+  state l1:float = 0.0
+  state l2:float = 0.0
+  encoder = new Encoders()
+  display = new Display()
+
+  reaction(trigger) -> encoder.trigger {=
+    lf_set(encoder.trigger, true);
+  =}
+
+  reaction(encoder.left) -> display.line1 {=
+    static char buf[17];
+    float f2 = 0.0;
+    self->l1 = (encoder.left->value/358.3);
+    snprintf(buf, 17, "L: %2f m", self->l1);
+    lf_set(display.line1, buf);
+  =}
+
+  reaction(encoder.right) -> display.line2 {=
+    static char buf[17];
+    self->l2 = (encoder.right->value/358.3);
+    snprintf(buf, 17, "L: %2f m", self->l2);
+    lf_set(display.line2, buf);
+  =}
+}
+
+reactor Robot {
+  input drive:bool       // Toggle mode.
+  output notify:string   // Notify of mode change.
+
+  m = new Motors()
+
+  reaction(startup) -> notify {=
+    lf_set(notify, "INIT");
+  =}
+
+  initial mode STOPPED {
+    reaction(drive) -> DRIVING, notify, m.left_power, m.right_power{=
+      lf_set(m.right_power, 0.0f);
+      lf_set(m.left_power, 0.0f);
+      lf_set_mode(DRIVING);
+      lf_set(notify, "DRIVING");
+    =}
+  }
+
+  mode DRIVING {
+    reaction(drive) -> DRIVING, notify, m.left_power, m.right_power{=
+      if (drive->value) {
+        lf_set(m.left_power, 0.05f);
+        lf_set(m.right_power, 0.05f);
+        lf_set_mode(DRIVING);
+        lf_set(notify, "DRIVING");
+      }
+    =}
+  }
+}
+
+main reactor {
+  timer t1(0, 1 sec)
+  timer t2(0, 100msec)
+
+  state drive:bool = true
+  robot = new Robot()
+  display = new Display()
+  distance = new AngleToDistance()
+
+  reaction(t1) -> robot.drive {=
+    lf_set(robot.drive, self->drive);
+  =}
+  robot.notify -> display.line0;
+
+  reaction(t2) -> distance.trigger{=
+    lf_set(distance.trigger, true);
+  =}
+}

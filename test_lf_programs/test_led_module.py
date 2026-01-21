@@ -10,6 +10,8 @@ import sys
 
 from pathlib import Path
 
+import argparse
+
 import cv2
 import numpy as np
 import time
@@ -34,7 +36,7 @@ INACTIVITY_TIMEOUT = 5.0
 MAX_IDLE_TIME = 10.0
 
 def plot():
-    ACT_HOME = Path.home()/"pololu"
+    #ACT_HOME = Path.home()/"pololu"
     
     df = pd.read_csv("blink_results.csv")
 
@@ -62,8 +64,8 @@ def plot():
     plt.legend(title="", fontsize=24)
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.tight_layout()
-    #plt.savefig("time_vs_deviation_percent.svg")
-    plt.savefig(ACT_HOME/"time_vs_deviation_percent.jpg")
+    plt.savefig("time_vs_deviation_percent.svg")
+    #plt.savefig(ACT_HOME/"time_vs_deviation_percent.jpg")
     #plt.show()
     return
     
@@ -219,8 +221,8 @@ def build(num):
         lf_file = "src/Blink_2.lf"
         elf_path = "bin/Blink_2.elf"
     else:
-        lf_file = "src/Blink.lf"
-        elf_path = "bin/Blink.elf"
+        lf_file = "src/Blink_3.lf"
+        elf_path = "bin/Blink_3.elf"
 
     shell_cmd = f"""
         set -e
@@ -244,19 +246,18 @@ def build(num):
         sys.exit(1)
 
 def main():
+    parser = argparse.ArgumentParser(description="Test for blink program. Give index and -p for plot")
+    parser.add_argument("number", type=int, help="Input number")
+    parser.add_argument("-p", action="store_true", help="Enable plotting")
 
-    ACT_HOME = Path.home()/"pololu"
-    LF_TEMPLATE = ACT_HOME/"lf-3pi-template"
+    args = parser.parse_args()
 
-    os.chdir(LF_TEMPLATE)
+    # Always called
+    led_detect2(args.number)
 
-    index = 2
-    clean()
-    while(index):
-        build(index)
-        led_detect2(index)
-        index -= 1
-    plot()
+    # Called only if -p is present
+    if args.p:
+        plot()
     
 if __name__ == "__main__":
     main()

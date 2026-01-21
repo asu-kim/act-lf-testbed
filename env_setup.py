@@ -108,21 +108,6 @@ def nixsetup():
 
     return 0
 
-def setup_folder():
-
-    ACT_HOME = Path.home()/"pololu"
-    TEST_FOLDER = ACT_HOME/"lf_embedded_lab_testbed/test_lf_programs"
-    LF_TEMPLATE = ACT_HOME/"lf-3pi-template"
-
-    os.chdir(ACT_HOME)
-    command = [
-            ["git", "clone", "git@github.com:lf-lang/lf-3pi-template.git"]]
-    cmd = command[0]
-    result = subprocess.run(cmd, capture_output=True, text=True, check = True)  
-
-    for file in TEST_FOLDER.glob("*.py"):
-        shutil.copy2(file, LF_TEMPLATE)
-
 def main():
 
     if prerequisites() != 0:
@@ -133,8 +118,6 @@ def main():
     
     if nixsetup() != 0:
         sys.exit(1)
-
-    setup_folder()
 
     print("\n\n All prerequisites are installed and packages are ready.\n\n")
 
