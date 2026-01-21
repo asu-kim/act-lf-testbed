@@ -11,6 +11,27 @@ CPS Testing (ACT) that performs automated, continuous testing of
 open-source software with its robotic platforms, integrated with
 the open-source infrastructure such as GitHub.
 
+## Methodology:
+The current iteration of ACT is targetted towards the Pololu 3pi+ 2040 Robot 
+which runs Lingua Franca programs. This robot is currently used in the
+embedded systems lab of the Lingua Franca ecosystem. We have testing methods 
+for the 
+(i) On-board LED 
+(ii) Motors
+(iii) Bump sensor and display
+(iv) IMU and display
+
+The testing method, clones the repository into the self-hosted runner, where it 
+installs the pre-requisite packages. The next step is compiling the lf files, 
+flashing the binary to the robot, monitor the behavior of the robot and then 
+upload the test data (graphs, csv) to this repo as artifacts.
+
+The script "env_setup.py" needs to be run manually since many of the commands 
+require user permission. The next step would be to host the runner in your local 
+machine and it will await the trigger to start testing.
+
 ## TODO:
 
-Changes in code and more uniformity.
+(i) Adding test cases for Bump sensor and display, IMU paired with display.
+(ii) Test cases where hardware is offline. Corner cases where certain tests fail 
+or hardware becomes unavailable.
