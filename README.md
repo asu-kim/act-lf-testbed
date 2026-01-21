@@ -16,10 +16,10 @@ The current iteration of ACT is targetted towards the Pololu 3pi+ 2040 Robot
 which runs Lingua Franca programs. This robot is currently used in the
 embedded systems lab of the Lingua Franca ecosystem. We have testing methods 
 for the 
-(i) On-board LED 
-(ii) Motors
-(iii) Bump sensor and display
-(iv) IMU and display
+1. On-board LED 
+2. Motors
+3. Bump sensor and display
+4. IMU and display
 
 The testing method, clones the repository into the self-hosted runner, where it 
 installs the pre-requisite packages. The next step is compiling the lf files, 
@@ -32,6 +32,6 @@ machine and it will await the trigger to start testing.
 
 ## TODO:
 
-(i) Adding test cases for Bump sensor and display, IMU paired with display.
-(ii) Test cases where hardware is offline. Corner cases where certain tests fail 
+1. Adding test cases for Bump sensor and display, IMU paired with display.
+2. Test cases where hardware is offline. Corner cases where certain tests fail 
 or hardware becomes unavailable.
