@@ -11,9 +11,9 @@ CPS Testing (ACT) that performs automated, continuous testing of
 open-source software with its robotic platforms, integrated with
 the open-source infrastructure such as GitHub.
 
-##Block Diagram:
+## Block Diagram:
 
-![ACT Block Diagram](misc/systemarch-1.svg)
+![ACT Block Diagram](misc/systemarch-1.jpg)
 
 This figure represents the illustrates the proposed approach, for a testing framework
 for CPS with physical robotic hardware.
