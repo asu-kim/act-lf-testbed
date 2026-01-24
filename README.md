@@ -13,7 +13,9 @@ the open-source infrastructure such as GitHub.
 
 ## Block Diagram:
 
-<img src="misc/systemarch-1.jpg" width="50%" height="50%" alt="ACT Block Diagram">
+<p align="center">
+<img src="misc/systemarch-1.jpg" width="60%" height="60%" alt="ACT Block Diagram">
+</p>
 
 This figure represents the illustrates the proposed approach, for a testing framework
 for CPS with physical robotic hardware.
