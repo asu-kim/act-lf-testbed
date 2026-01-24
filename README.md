@@ -11,6 +11,13 @@ CPS Testing (ACT) that performs automated, continuous testing of
 open-source software with its robotic platforms, integrated with
 the open-source infrastructure such as GitHub.
 
+##Block Diagram:
+
+![ACT Block Diagram](misc/systemarch-1.svg)
+
+This figure represents the illustrates the proposed approach, for a testing framework
+for CPS with physical robotic hardware.
+
 ## Methodology:
 The current iteration of ACT is targetted towards the Pololu 3pi+ 2040 Robot 
 which runs Lingua Franca programs. This robot is currently used in the
